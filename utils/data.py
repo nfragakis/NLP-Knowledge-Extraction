@@ -17,11 +17,6 @@ stop_words = ['a','about','above','after','again','against','ago','ain','all','a
               'until','up','ve','very','was','wasn','we','were','weren','what','when','where','which','while','who','whom',
               'why','will','with','won','y','you',"you'd","you'll","you're","you've",'your','yours','yourself','yourselves']
 
-add_stop_words=['schneider','electric','brand','subject','reply','fwd','dear','kindly','kind','fw','re','please','regards',
-               'sir','team','hello','hi','hey','guy','guys','pl','pls','would','xls','xlsx','jpeg','png','pdf','jpg'
-               'xml','noreply','sent','fyi','pfa','could','also','iso','madam','plz','nature','defect','good','morning','ref','case',
-               'defective','product','details','detail','mr']
-
 stop_words_custom = list(set(stop_words + add_stop_words))
 
 flatten_list = lambda docs: [x for sublist in docs for x in sublist]
