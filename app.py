@@ -1,5 +1,5 @@
 import streamlit as st 
-from utils.model_class import Pipeline 
+from model_class import Pipeline 
 import spacy_streamlit
 import spacy
 import os
