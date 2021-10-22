@@ -6,3 +6,8 @@ This repo contains a python implementation of bootstrapping a knowledge graph fr
 
 ## Setup Instructions
 
+# TODO 
+- Setup Instructions (Dockerfile)
+- Training Instructions
+- Cluster functions
+- Streamlit App instructions

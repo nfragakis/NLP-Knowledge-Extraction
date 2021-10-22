@@ -1,4 +1,13 @@
-class ARGUS(mlflow.pyfunc.PythonModel):
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering
+from nltk.tokenize import word_tokenize, sent_tokenize
+from collections import defaultdict
+import numpy as np
+import torch
+import nltk
+import spacy
+import re
+
+class Pipeline():
   """
   ARGUS pipeline wrapped in ml flow function for use via
     mlflow platform
@@ -9,26 +18,21 @@ class ARGUS(mlflow.pyfunc.PythonModel):
   Load
     model = mlflow.pyfunc.load_model('models:/ARGUS IE/1')
   """
-  
-  def __init__(self, MODEL_PATH = '/dbfs/FileStore/ARGUS'):
-    from transformers import AutoTokenizer, AutoModelForQuestionAnswering
-    from nltk.tokenize import word_tokenize, sent_tokenize
+
+  def __init__(self):
     nltk.download('stopwords')
     nltk.download('punkt')
     nltk.download('wordnet')
     
-    import mlflow
-    
-    import spacy
-    assert spacy.__version__=='2.1.0'
-    
-    self.nlp = mlflow.spacy.load_model('models:/ARGUS NER/1')
-    self.tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH + '/tokenizer')
-    self.qa_model = AutoModelForQuestionAnswering.from_pretrained(MODEL_PATH + '/qa_model')
+    self.nlp = spacy.load('en_core_web_trf')
+    self.tokenizer = AutoTokenizer.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
+    self.qa_model = AutoModelForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
     
     
-  def predict(self, context, model_input):
-    return self.process_request(model_input)
+  def predict(self, model_input):
+    spacy.displacy.render(self.nlp(model_input), style='ent')
+    self.triplets = self.process_request(model_input)
+    return self.triplets
     
     
   def find_issue(self, txt, ent, question, verbose=True):
@@ -60,7 +64,7 @@ class ARGUS(mlflow.pyfunc.PythonModel):
   
   
   def id_ents(self, txt):
-    return [ent.text for ent in self.nlp(txt).ents if (ent.label_ == 'PRODUCT')]
+    return [ent.text for ent in self.nlp(txt).ents if ent.label_ in ['EVENT','PRODUCT', 'GPE', 'ORG', 'MONEY', 'PERSON']]
 
 
   def clean_request(self, txt):
@@ -97,7 +101,7 @@ class ARGUS(mlflow.pyfunc.PythonModel):
     return paragraph
   
   
-  def resolve_relations(self, txt, THRESHOLD=0.9):
+  def resolve_relations(self, txt, THRESHOLD=0.93):
     """
     loop through all relation/question pairs
     in the query dict to extract key relation
@@ -106,9 +110,10 @@ class ARGUS(mlflow.pyfunc.PythonModel):
     THRESHOLD value.
     """
     query_dict = {
-        'CONTEXT': "What is the context of the ",
-        'ISSUE': "What is the issue with the ",
-        'LOCATION': "What is the location of the "
+        'CONTEXT': "What is the context of ",
+        'RELEVANCE': "What is the relevance of ",
+        'LOCATION': "What is the location of ",
+        'SIGNIFICANCE': 'What is the significance of '
     }
 
     triplets = []
@@ -148,6 +153,14 @@ class ARGUS(mlflow.pyfunc.PythonModel):
   
   
   def process_request(self, txt):
+    """
+    Full pipeline f(x) for processing new texts of 
+    arbitrary length
+      1) Requests split to chunks of <= 512 chars 
+      2) Process Named Entities 
+      3) Extract relational information 
+    """
+    
     try:
       chunks = self.split_request(txt)
       if len(chunks) == 1:
