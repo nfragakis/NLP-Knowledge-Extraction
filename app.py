@@ -9,9 +9,7 @@ nlp = spacy.load('en_core_web_trf')
 model = Pipeline()
 
 def main():
-    st.title("Market Movers AI Demo")
-    our_image = Image.open(os.path.join('mm.png'))
-    st.image(our_image)
+    st.title("Knowledge Extraction AI Demo")
 
     raw_text = st.text_area("Your Text", "Enter Text Here")
     docx = nlp(raw_text)
