@@ -32,11 +32,11 @@ ENV PYTHONPATH "${PYTHONPATH}:/usr/bin/python3"
 RUN apt-get -y install python3-pip python-setuptools
 
 # setup file system
-RUN mkdir argus
-ENV HOME=/argus
+RUN mkdir ke 
+ENV HOME=/ke
 ENV SHELL=/bin/bash
-VOLUME /argus
-WORKDIR /argus
-ADD . /argus
+VOLUME /ke
+WORKDIR /ke
+ADD . /ke
 
 RUN pip3 install --upgrade pip && pip3 install --no-cache-dir -r requirements.txt
